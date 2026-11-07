@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WJ No-Communication Flowchart</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column like a shop-manual page; an overview map up top, then the flow as linked decision nodes, then a reference sheet. */
+:root{
+  --bg:#eceef0; --surface:#ffffff; --fg:#1b2027; --muted:#58616c; --line:#c8ced5;
+  --accent:#0d6b55; --accent-soft:#dcefe8;
+  --yes:#0d6b55; --no:#b2431b; --no-soft:#f6e3da; --warn:#9a6300; --warn-soft:#f7ebcf;
+  --node:#fbfbfa; --code-bg:#f1f3f4;
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --body:"Source Sans 3","Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#14171b; --surface:#1d2126; --fg:#e7eaed; --muted:#9ca5ae; --line:#363d45;
+  --accent:#43b394; --accent-soft:#1c3a32;
+  --yes:#43b394; --no:#e8804f; --no-soft:#3d2419; --warn:#dcae4a; --warn-soft:#3b3015;
+  --node:#22272d; --code-bg:#272d34; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#14171b; --surface:#1d2126; --fg:#e7eaed; --muted:#9ca5ae; --line:#363d45;
+  --accent:#43b394; --accent-soft:#1c3a32;
+  --yes:#43b394; --no:#e8804f; --no-soft:#3d2419; --warn:#dcae4a; --warn-soft:#3b3015;
+  --node:#22272d; --code-bg:#272d34; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:860px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:.01em}
+h2{font-size:28px;font-weight:700}
+h3{font-size:21px;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--mono);font-size:.92em}
+code{background:var(--code-bg);padding:1px 5px;border-radius:3px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+header.top{padding-block:40px 24px;border-bottom:2px solid var(--fg);display:grid;gap:12px}
+.lede{font-size:18px;max-width:62ch;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:8px}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 12px}
+.fact b{display:block;font-family:var(--display);font-size:18px;font-weight:600}
+.fact span{color:var(--muted);font-size:14px}
+
+section{padding-block:32px;border-bottom:1px solid var(--line)}
+section>.eyebrow{margin-bottom:6px}
+.intro{color:var(--muted);max-width:66ch;margin-top:8px}
+
+figure{margin:20px 0 0}
+.mapbox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:8px}
+.mapbox svg{display:block;min-width:620px;max-width:100%;height:auto;margin:0 auto}
+figcaption{font-size:14px;color:var(--muted);margin-top:8px;max-width:66ch}
+
+.callout{background:var(--surface);border:1px solid var(--line);padding:16px 18px;margin-top:16px;display:grid;gap:8px}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout h3{font-size:19px}
+.callout ul{margin:0;padding-left:20px}
+.callout li{margin:2px 0}
+
+/* Branch and node styling */
+.branch{padding-block:32px;border-bottom:1px solid var(--line)}
+.branch-head{display:grid;gap:6px;margin-bottom:18px}
+.branch-head .when{color:var(--muted);max-width:66ch}
+.flow{display:grid;gap:0}
+.node{background:var(--node);border:1px solid var(--line);padding:16px 18px;display:grid;gap:10px;position:relative}
+.node+.node{margin-top:28px}
+.node+.node::before{content:"";position:absolute;left:28px;top:-29px;width:2px;height:28px;background:var(--fg)}
+.node+.node::after{content:"";position:absolute;left:23px;top:-6px;border:6px solid transparent;border-top:7px solid var(--fg);border-bottom:0}
+.node.decision{border-left:5px solid var(--warn)}
+.node.action{border-left:5px solid var(--accent)}
+.node.end{border-left:5px solid var(--no)}
+.node .id{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em}
+.node .q{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.1;text-wrap:balance}
+.node .how{max-width:66ch}
+.node .how b{font-weight:600}
+.results{display:grid;gap:6px;margin:4px 0 0;padding:0;list-style:none}
+.results li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:8px 10px;background:var(--surface);border:1px solid var(--line)}
+.chip{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.05em;padding:3px 8px;border:1px solid;white-space:nowrap;margin-top:2px}
+.chip.yes{color:var(--yes);border-color:var(--yes);background:var(--accent-soft)}
+.chip.no{color:var(--no);border-color:var(--no);background:var(--no-soft)}
+.chip.any{color:var(--warn);border-color:var(--warn);background:var(--warn-soft)}
+.go{font-weight:600;white-space:nowrap}
+.meter{font-family:var(--mono);font-size:14px;background:var(--code-bg);padding:8px 10px;display:grid;gap:4px}
+.meter span{display:block}
+.meter b{font-weight:600}
+
+/* Reference tables */
+.tablewrap{overflow-x:auto;margin-top:14px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px;background:var(--surface)}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-family:var(--display);font-size:17px;font-weight:600;background:var(--code-bg)}
+td.mono,th.mono{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:14px}
+.cols>div{min-width:0;background:var(--surface);border:1px solid var(--line);padding:14px 16px}
+.cols h3{margin-bottom:8px}
+.cols ol,.cols ul{margin:0;padding-left:20px}
+.cols li{margin:3px 0}
+.foot{padding-block:24px;color:var(--muted);font-size:14px;max-width:70ch}
+@media (max-width:480px){ .node .q{font-size:20px} .results li{grid-template-columns:1fr} .chip{justify-self:start} }
+@media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">2000 Jeep Grand Cherokee (WJ) · 4.0L inline-six · 4WD</span>
+  <h1>Finding why the scan tool can't talk to the engine computer</h1>
+  <p class="lede">Your scan tool calls it the ECM. Jeep calls it the PCM (Powertrain Control Module). Work the flow top to bottom. Every box tells you what to do, what reading you should get, and where to go next.</p>
+  <div class="facts">
+    <div class="fact"><b>The computer</b><span>PCM, passenger-side firewall in the engine bay. Three 32-pin plugs: black (C1), white (C2), gray (C3).</span></div>
+    <div class="fact"><b>The port</b><span>Data link connector (DLC), under the dash to the left of the steering column, near the hood release.</span></div>
+    <div class="fact"><b>The data wire</b><span>One wire called the PCI bus (protocol SAE J1850 VPW). Pin 2 of the port. Yellow with a violet stripe.</span></div>
+    <div class="fact"><b>Who shares that wire</b><span>PCM, gauge cluster, ABS, airbag module, radio, overhead console, Sentry Key module, and more. One bad one can silence all of them.</span></div>
+  </div>
+</header>
+
+<section id="overview">
+  <span class="eyebrow">Overview</span>
+  <h2>The whole flow on one page</h2>
+  <p class="intro">Two things you can observe without any tool decide most of the diagnosis: what the odometer shows with the key on, and whether the engine runs. The five lettered branches below are worked out in detail further down.</p>
+  <figure>
+    <div class="mapbox">
+    <svg viewBox="0 0 940 500" role="img" aria-label="Flowchart: start, check basics, then ask whether the odometer reads no bus. No leads to branch A (port checks) then branch D (tool and port wire). Yes leads to asking whether the engine runs; runs leads to branch C (bus short), no start leads to branch E (PCM power and grounds), which feeds into branch C if still no bus." font-family="Source Sans 3, Helvetica, Arial, sans-serif" font-size="13" fill="currentColor">
+      <defs>
+        <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g stroke="currentColor" stroke-width="1.6" fill="none" marker-end="url(#arw)">
+        <line x1="470" y1="56" x2="470" y2="84"/>
+        <line x1="470" y1="134" x2="470" y2="162"/>
+        <path d="M300,208 H200 V298"/>
+        <path d="M640,208 H720 V284"/>
+        <line x1="200" y1="352" x2="200" y2="398"/>
+        <path d="M570,330 H540 V418"/>
+        <path d="M870,330 H840 V418"/>
+        <line x1="740" y1="452" x2="664" y2="452"/>
+      </g>
+      <!-- START -->
+      <rect x="350" y="20" width="240" height="36" rx="18" fill="var(--surface)" stroke="currentColor" stroke-width="1.6"/>
+      <text x="470" y="43" text-anchor="middle" font-weight="600">Scan tool: "No communication"</text>
+      <!-- Basics -->
+      <rect x="300" y="84" width="340" height="50" fill="var(--surface)" stroke="currentColor" stroke-width="1.6"/>
+      <text x="470" y="104" text-anchor="middle" font-weight="600">Basics first</text>
+      <text x="470" y="122" text-anchor="middle" font-size="12">Key in RUN · battery over 12.4 V · tool proven on another car</text>
+      <!-- Q1 diamond -->
+      <polygon points="300,208 470,162 640,208 470,254" fill="var(--surface)" stroke="var(--warn)" stroke-width="2"/>
+      <text x="470" y="204" text-anchor="middle" font-weight="600">Key on, wait 20 seconds.</text>
+      <text x="470" y="222" text-anchor="middle" font-weight="600">Odometer reads "no bus"?</text>
+      <text x="238" y="200" text-anchor="middle" font-size="12" font-weight="600">NO</text>
+      <text x="238" y="233" text-anchor="middle" font-size="11" font-style="italic">PCM is alive and talking</text>
+      <text x="700" y="200" text-anchor="middle" font-size="12" font-weight="600">YES</text>
+      <text x="700" y="233" text-anchor="middle" font-size="11" font-style="italic">the data wire is down</text>
+      <!-- A -->
+      <rect x="60" y="298" width="280" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="200" y="320" text-anchor="middle" font-weight="600">Branch A · Check the port</text>
+      <text x="200" y="338" text-anchor="middle" font-size="12">power on pin 16, grounds, signal on pin 2</text>
+      <!-- D -->
+      <rect x="60" y="398" width="280" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="200" y="420" text-anchor="middle" font-weight="600">Branch D · Tool and port-to-PCM wire</text>
+      <text x="200" y="438" text-anchor="middle" font-size="12">second tool, force J1850 VPW, continuity test</text>
+      <!-- Q2 diamond -->
+      <polygon points="570,330 720,284 870,330 720,376" fill="var(--surface)" stroke="var(--warn)" stroke-width="2"/>
+      <text x="720" y="326" text-anchor="middle" font-weight="600">Engine starts and</text>
+      <text x="720" y="344" text-anchor="middle" font-weight="600">keeps running?</text>
+      <text x="532" y="392" text-anchor="end" font-size="12" font-weight="600">YES, it runs</text>
+      <text x="848" y="392" text-anchor="start" font-size="12" font-weight="600">NO start</text>
+      <!-- C -->
+      <rect x="424" y="418" width="240" height="68" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="544" y="442" text-anchor="middle" font-weight="600">Branch C · Data wire shorted</text>
+      <text x="544" y="460" text-anchor="middle" font-size="12">unplug modules one at a time</text>
+      <text x="544" y="476" text-anchor="middle" font-size="12">until "no bus" clears</text>
+      <!-- E -->
+      <rect x="740" y="418" width="180" height="68" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="830" y="442" text-anchor="middle" font-weight="600">Branch E · PCM itself</text>
+      <text x="830" y="460" text-anchor="middle" font-size="12">fuses, power pins, grounds,</text>
+      <text x="830" y="476" text-anchor="middle" font-size="12">5 V sensor supply, plugs</text>
+      <text x="702" y="444" text-anchor="middle" font-size="11" font-style="italic">PCM power OK,</text>
+      <text x="702" y="470" text-anchor="middle" font-size="11" font-style="italic">still "no bus"</text>
+    </svg>
+    </div>
+    <figcaption>The odometer question splits the job in half. "No bus" means the gauge cluster is not hearing the PCM, so the data wire or the PCM is the problem. A normal odometer means the PCM is talking fine and only the port or the tool is at fault.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <h3>What you need</h3>
+    <ul>
+      <li>A digital multimeter (volts and ohms). A test light helps for fuses.</li>
+      <li>A second scan tool if you can borrow one, ideally a wired handheld rather than a cheap Bluetooth dongle.</li>
+      <li>The fuse maps printed on the lids of both fuse boxes. Fuse numbers below come from WJ fuse charts; the lid on your truck wins if it differs.</li>
+      <li>A paperclip or back-probe pins for reaching into connectors without damaging them.</li>
+    </ul>
+  </div>
+  <div class="callout warn">
+    <h3>Safety</h3>
+    <ul>
+      <li>Disconnect the battery negative cable before unplugging the PCM or any module. Never unplug the PCM with the key on.</li>
+      <li>After disconnecting the battery, wait two full minutes before touching the airbag module under the center console.</li>
+      <li>Never probe port pin 16 with an ohmmeter while the battery is connected, and never let a probe bridge pin 16 to pin 2. That is the classic way to blow the port fuse and silence the data wire.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="start" class="branch">
+  <div class="branch-head">
+    <span class="eyebrow">Start here</span>
+    <h2>Step 0 · Rule out the easy stuff</h2>
+    <p class="when">Five minutes. Most "no communication" calls end right here.</p>
+  </div>
+  <div class="flow">
+    <div class="node decision" id="s1">
+      <span class="id">0.1</span>
+      <p class="q">Is the key in RUN (not ACC) and is the battery healthy?</p>
+      <p class="how">Measure across the battery posts with everything off. The PCM goes quiet below roughly 10 volts, and a cheap scanner will give up before that.</p>
+      <div class="meter"><span><b>Battery, key off:</b> 12.4 V or more is good. 12.0 V or less: charge it before doing anything else.</span></div>
+      <ul class="results">
+        <li><span class="chip no">LOW</span><span>Charge or jump the battery, then retry the scan tool. If it connects, you are done.</span></li>
+        <li><span class="chip yes">GOOD</span><span class="go">Continue to 0.2.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="s2">
+      <span class="id">0.2</span>
+      <p class="q">Does this scan tool work on a different car?</p>
+      <p class="how">Plug it into any other OBD-II vehicle. If it fails there too, the tool or its cable is the problem, not the Jeep. If you are using a phone app with a Bluetooth plug, set the app's protocol by hand to <b>J1850 VPW</b> (listed as protocol 2 in most ELM327 apps) and try again. Many bargain plugs handle this older Chrysler protocol badly on auto-detect.</p>
+      <ul class="results">
+        <li><span class="chip no">FAILS ELSEWHERE</span><span>Replace or repair the tool. Done.</span></li>
+        <li><span class="chip yes">WORKS ELSEWHERE</span><span class="go">Continue to 0.3.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="s3">
+      <span class="id">0.3</span>
+      <p class="q">Did anything change right before this started?</p>
+      <p class="how">A stereo, alarm or remote-start install, a jump start done backwards, a dead cigarette lighter, or someone else's scanner plugged in. Each one points at a specific place in the flow: aftermarket wiring usually taps the ignition feed or the data wire, a backwards jump usually kills fuses or the PCM, and a dead lighter or a borrowed scanner points at the port fuse.</p>
+      <ul class="results">
+        <li><span class="chip any">ANY</span><span>Note it. Look there first when you reach that branch.</span></li>
+        <li><span class="chip yes">NEXT</span><span class="go">Go to <a href="#q1">the first big question, 1.1</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="q1">
+      <span class="id">1.1 · The question that splits the job</span>
+      <p class="q">Turn the key to RUN, wait 20 seconds. Does the odometer window say "no bus"?</p>
+      <p class="how">The gauge cluster listens to the PCM on the same data wire your scanner uses. If it stops hearing the PCM, it replaces the mileage with "no bus" (it looks like "no bUS"). Also note whether the gauges sweep at key-on and whether the Check Engine light comes on for a few seconds and then goes out.</p>
+      <ul class="results">
+        <li><span class="chip no">NO, odometer normal</span><span>The PCM is alive and talking to the cluster. The fault is between the port and the data wire, or in the tool. <span class="go">Go to <a href="#A">Branch A</a>.</span></span></li>
+        <li><span class="chip yes">YES, "no bus"</span><span>The cluster is not hearing the PCM. <span class="go">Go to <a href="#q2">1.2</a>.</span></span></li>
+        <li><span class="chip any">CLUSTER DEAD</span><span>No gauges, no odometer at all. The cluster and the port share fuse 17 in the junction block. <span class="go">Go to <a href="#A2">A2</a> first.</span></span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="q2">
+      <span class="id">1.2</span>
+      <p class="q">Does the engine start and keep running?</p>
+      <p class="how">A running engine proves the PCM has power, ground and a working brain. A no-start together with "no bus" usually means the PCM is not powered up at all. One special case: if the engine starts and dies after about two seconds, the Sentry Key immobilizer can't reach the PCM over the dead data wire. Treat that as "runs" for this question.</p>
+      <ul class="results">
+        <li><span class="chip yes">RUNS (or starts then dies at 2 s)</span><span>The PCM works but nobody can hear it. The data wire is shorted or broken. <span class="go">Go to <a href="#C">Branch C</a>.</span></span></li>
+        <li><span class="chip no">CRANKS, NO START</span><span>Check the PCM's own power and grounds first. <span class="go">Go to <a href="#E">Branch E</a>.</span></span></li>
+        <li><span class="chip any">WON'T CRANK</span><span>The PCM does not control cranking on this truck. Fix the no-crank (battery, starter, neutral safety switch) separately, then come back and answer this question with the key in RUN.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="A" class="branch">
+  <div class="branch-head">
+    <span class="eyebrow">Branch A</span>
+    <h2>Check the port</h2>
+    <p class="when">Come here when the odometer is normal. The PCM is talking; the scanner just can't hear it. Three things have to be right at the port: power on pin 16, ground on pins 4 and 5, and a live signal on pin 2. Pin numbers are molded into the connector face. About 15 minutes.</p>
+  </div>
+  <div class="flow">
+    <div class="node decision" id="A1">
+      <span class="id">A1</span>
+      <p class="q">Is there power on pin 16?</p>
+      <p class="how">Key in RUN. Red meter lead in pin 16, black lead in pin 4. Most WJs show this voltage with the key off too, but test with the key on.</p>
+      <div class="meter"><span><b>Pin 16 to pin 4:</b> battery voltage, about 12 to 12.6 V.</span><span><b>0 V:</b> no power. The scanner won't even light up.</span></div>
+      <ul class="results">
+        <li><span class="chip no">0 V</span><span class="go">Go to <a href="#A2">A2</a>.</span></li>
+        <li><span class="chip yes">12 V</span><span class="go">Go to <a href="#A3">A3</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node action" id="A2">
+      <span class="id">A2</span>
+      <p class="q">Check fuse 17 (10 amp) in the junction block</p>
+      <p class="how">The junction block is the interior fuse box. Open the driver's door and pull the cover off the left end of the dash. Fuse 17 feeds both the port and the gauge cluster, which is why a dead cluster and a dead port happen together. Pull the fuse and look at it, or test both sides with a test light.</p>
+      <ul class="results">
+        <li><span class="chip no">BLOWN</span><span>Replace it, key on, retest A1. If it blows again, something is shorting that circuit: look at the port for a bent pin touching its neighbor, a crushed wire behind the port, or a damaged plug on the cluster.</span></li>
+        <li><span class="chip yes">GOOD, but still 0 V at pin 16</span><span>The wire between fuse 17 and pin 16 is open, or the pin 16 terminal is corroded or pushed back out of the connector. Look at the back of the port: the pin 16 wire should be seated and clean. Repair, then retest A1.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="A3">
+      <span class="id">A3</span>
+      <p class="q">Are pins 4 and 5 good grounds?</p>
+      <p class="how">Key in RUN. Black lead on the battery negative post (or a clean bolt on the body), red lead in pin 4, then pin 5. You are measuring how much voltage is lost across the ground wire. Both grounds run to the body ground behind the left kick panel.</p>
+      <div class="meter"><span><b>Pin 4 or 5 to battery negative:</b> under 0.2 V. (Or under 1 ohm with the battery disconnected.)</span></div>
+      <ul class="results">
+        <li><span class="chip no">OVER 0.2 V / OPEN</span><span>Clean or repair the kick panel ground and the pin terminals. Retest.</span></li>
+        <li><span class="chip yes">GOOD</span><span class="go">Go to <a href="#A4">A4</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="A4">
+      <span class="id">A4</span>
+      <p class="q">Is the data wire alive at pin 2?</p>
+      <p class="how">Key in RUN. Red lead in pin 2, black lead in pin 4. The data wire idles at 0 volts and pulses up to about 7.5 volts whenever any module talks. A multimeter averages those pulses, so a live bus shows a bouncing reading somewhere between about 1 and 3 volts. Turn the headlights or wipers on and off while watching: the reading should twitch.</p>
+      <div class="meter"><span><b>Live:</b> bouncing, roughly 1 to 3 V average.</span><span><b>Steady 0 V:</b> this branch of the wire is dead.</span><span><b>Steady 12 V:</b> the wire is touching battery power somewhere.</span></div>
+      <ul class="results">
+        <li><span class="chip yes">BOUNCING</span><span>The port is fine and the data wire is live. <span class="go">Go to <a href="#D">Branch D</a>.</span></span></li>
+        <li><span class="chip no">STEADY 0 V</span><span>The cluster hears the PCM but the port does not, so the short stub of wire from pin 2 to the rest of the bus is open or the pin 2 terminal is bad. <span class="go">Go to <a href="#D2">D2</a>.</span></span></li>
+        <li><span class="chip no">STEADY 12 V</span><span>Shorted to power. <span class="go">Go to <a href="#C">Branch C</a>.</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="D" class="branch">
+  <div class="branch-head">
+    <span class="eyebrow">Branch D</span>
+    <h2>The tool, and the wire from the port to the PCM</h2>
+    <p class="when">Come here when the port has power, ground, and a live signal on pin 2. About 20 minutes.</p>
+  </div>
+  <div class="flow">
+    <div class="node decision" id="D1">
+      <span class="id">D1</span>
+      <p class="q">Does a second, known-good scan tool connect?</p>
+      <p class="how">Borrow a wired handheld scanner (any parts store will plug one in for free). If your own tool is a phone app, this is also the moment to force the protocol to J1850 VPW instead of auto.</p>
+      <ul class="results">
+        <li><span class="chip yes">CONNECTS</span><span>Your original tool is the problem. Done.</span></li>
+        <li><span class="chip no">STILL NOTHING</span><span class="go">Go to <a href="#D2">D2</a>.</span></li>
+        <li><span class="chip any">SEES ABS OR AIRBAG BUT NOT ENGINE</span><span>Some tools can list every module on the bus. If the tool reaches other modules but never the PCM, the PCM's own data pin or its internal bus driver is dead. <span class="go">Go to <a href="#D3">D3</a>.</span></span></li>
+      </ul>
+    </div>
+    <div class="node action" id="D2">
+      <span class="id">D2</span>
+      <p class="q">Check the pin 2 terminal and the wire to the PCM</p>
+      <p class="how">First look: shine a light into pin 2 and check that the terminal is not green, spread open, or pushed back. Then, with the battery disconnected, measure resistance from port pin 2 to the yellow-with-violet-stripe wire at the PCM's black connector (C1). Most WJ pinout charts put it at cavity 11 of C1; confirm on your wiring diagram. Backprobe from the wire side so you don't spread the terminal.</p>
+      <div class="meter"><span><b>Port pin 2 to PCM data wire, battery off:</b> under 1 ohm.</span></div>
+      <ul class="results">
+        <li><span class="chip no">OPEN / HIGH</span><span>Broken wire or bad terminal. The usual spots are behind the left kick panel where the harness bends, and any aftermarket splice. Repair and retest the scanner.</span></li>
+        <li><span class="chip yes">UNDER 1 OHM</span><span class="go">Go to <a href="#D3">D3</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node end" id="D3">
+      <span class="id">D3 · End of branch</span>
+      <p class="q">Everything measures right and two tools still can't reach the PCM</p>
+      <p class="how">The engine runs, the cluster hears the PCM, the port is good, and the wire is continuous. What's left is inside the PCM: its bus transmitter has failed, or the PCM is so early that it needs a software update from a dealer-level tool before generic scanners can talk to it. Ask a dealer or a shop with a Chrysler DRB-III or wiTECH tool to try first; if their tool can't reach it either, replace the PCM (see <a href="#E6">E6</a> for what a replacement involves).</p>
+    </div>
+  </div>
+</section>
+
+<section id="C" class="branch">
+  <div class="branch-head">
+    <span class="eyebrow">Branch C</span>
+    <h2>The data wire is shorted or broken</h2>
+    <p class="when">Come here when the odometer says "no bus" but the engine runs, or when pin 2 sits at a steady 12 volts. Every module on the truck shares one wire. If one module fails internally and pins the wire to ground or to power, every module goes silent, including the PCM. The job is to find which one. Budget an hour.</p>
+  </div>
+  <div class="flow">
+    <div class="node decision" id="C1">
+      <span class="id">C1</span>
+      <p class="q">What is pin 2 doing?</p>
+      <p class="how">Key in RUN, red lead in port pin 2, black lead in pin 4, same as A4.</p>
+      <div class="meter"><span><b>Bouncing 1 to 3 V:</b> the wire is live at the port.</span><span><b>Steady 0 V:</b> shorted to ground, or no module is transmitting.</span><span><b>Steady 12 V:</b> shorted to battery power.</span></div>
+      <ul class="results">
+        <li><span class="chip any">BOUNCING, yet odometer says "no bus"</span><span>The bus is alive but the cluster isn't hearing it. Suspect the cluster's own plug or the cluster itself. Pull the cluster, inspect its connector for a bent or backed-out data pin, reseat, retest. If "no bus" persists with a live wire, the cluster is at fault.</span></li>
+        <li><span class="chip no">STEADY 0 V or 12 V</span><span class="go">Go to <a href="#C2">C2</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node action" id="C2">
+      <span class="id">C2</span>
+      <p class="q">Disconnect the battery and measure the wire's resistance to ground</p>
+      <p class="how">Battery negative off. Ohmmeter from port pin 2 to pin 4. Each module hangs a resistor of roughly 10,000 ohms on the wire, so with eight or ten modules plugged in you should see a reading in the low thousands of ohms.</p>
+      <div class="meter"><span><b>Normal:</b> roughly 1,000 to 3,000 ohms.</span><span><b>Near 0 ohms:</b> hard short to ground somewhere.</span><span><b>Very high / open:</b> the wire is broken near the port (go back to <a href="#D2">D2</a>).</span></div>
+      <ul class="results">
+        <li><span class="chip any">NOTE THE READING</span><span>You will watch this number (or the pin 2 voltage, or the odometer) change as you unplug modules. <span class="go">Go to <a href="#C3">C3</a>.</span></span></li>
+      </ul>
+    </div>
+    <div class="node action" id="C3">
+      <span class="id">C3</span>
+      <p class="q">Unplug modules one at a time until "no bus" clears</p>
+      <p class="how">For each module: battery off, unplug it, battery on, key RUN, wait 20 seconds, look at the odometer (or recheck pin 2). If "no bus" goes away, the module you just unplugged is the one dragging the wire down. Plug the previous one back in before moving to the next so you only ever have one module out. Work in this order, easiest and most common first:</p>
+      <ol style="margin:0;padding-left:22px">
+        <li><b>Radio.</b> Pull it from the dash and unplug its connectors. A common bus killer on WJs.</li>
+        <li><b>Overhead console</b> (compass and trip computer). Drop it and unplug.</li>
+        <li><b>ABS controller.</b> Under the hood, driver's side, bolted to the brake hydraulic unit. Another frequent offender.</li>
+        <li><b>Sentry Key immobilizer module</b>, if equipped. The small module around the ignition lock cylinder.</li>
+        <li><b>Airbag control module.</b> Under the center console. Battery off and wait two minutes first.</li>
+        <li><b>Automatic climate control head</b>, memory seat module, driver and passenger door modules (Limited models).</li>
+        <li><b>Junction block / body controller.</b> The interior fuse box is also a computer. Unplug its large connectors.</li>
+        <li><b>The PCM itself.</b> Last, because it's the hardest to reach. Battery off, unplug all three connectors, battery on, key RUN. If "no bus" goes away (the cluster will now show "no bus" for a different reason, so watch pin 2 voltage return to normal instead), the PCM is shorting the bus.</li>
+      </ol>
+      <ul class="results">
+        <li><span class="chip yes">CLEARS WHEN MODULE X IS OUT</span><span>Module X is the fault. Before buying one, check its connector for water or corrosion, which can short the pins without the module being bad. Replace or repair, retest with the scanner. If X is the PCM, <span class="go">go to <a href="#E6">E6</a>.</span></span></li>
+        <li><span class="chip no">NEVER CLEARS</span><span class="go">Go to <a href="#C4">C4</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node end" id="C4">
+      <span class="id">C4 · End of branch</span>
+      <p class="q">No module clears it, so the wire itself is damaged</p>
+      <p class="how">With every module unplugged the resistance from pin 2 to ground should be essentially infinite. If it still reads low, the insulation is rubbed through somewhere. Check these places, in order:</p>
+      <ul style="margin:0;padding-left:22px">
+        <li>Behind the gauge cluster and under the left kick panel, where the harness bends sharply.</li>
+        <li>The grommet where the harness passes through the firewall on the driver's side.</li>
+        <li>The passenger-side cowl near the PCM. Leaves block the drains and water runs onto the PCM plugs and harness.</li>
+        <li>Any aftermarket splice, scotch-lock, or tapped wire from a stereo, alarm, or remote starter.</li>
+        <li>Under the hood near the ABS unit and along the inner fender.</li>
+      </ul>
+      <p class="how">Repair the damaged section with solder and heat shrink. Retest at C1.</p>
+    </div>
+  </div>
+</section>
+
+<section id="E" class="branch">
+  <div class="branch-head">
+    <span class="eyebrow">Branch E</span>
+    <h2>The PCM's own power, grounds and sensors</h2>
+    <p class="when">Come here when the engine cranks but won't start and the odometer says "no bus". A PCM with no power, no ground, or a shorted sensor supply never wakes up, so nothing can talk to it. About 45 minutes. The PCM is on the passenger-side firewall; the black connector (C1) carries the power and ground pins.</p>
+  </div>
+  <div class="flow">
+    <div class="node action" id="E1">
+      <span class="id">E1</span>
+      <p class="q">Check the under-hood fuse box</p>
+      <p class="how">The power distribution center is under the hood on the driver's side next to the battery. Read the lid map and check every fuse labeled for the PCM, engine controller, IOD (memory keep-alive), and the fuel pump / ASD (automatic shutdown) circuit, plus the ASD relay. Test each fuse with a test light on both sides rather than trusting your eyes.</p>
+      <ul class="results">
+        <li><span class="chip no">BLOWN</span><span>Replace, key RUN, retest the scanner. If it blows again there is a short on that circuit; a backwards jump start is the usual story and the PCM may be damaged.</span></li>
+        <li><span class="chip yes">ALL GOOD</span><span class="go">Go to <a href="#E2">E2</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="E2">
+      <span class="id">E2</span>
+      <p class="q">Does the PCM have both of its power feeds?</p>
+      <p class="how">On the black connector (C1), pins 2 and 22 are the two power feeds. One is constant battery power (keeps memory alive), the other is switched by the ignition. Backprobe each from the wire side with the connector plugged in; black lead on the battery negative post.</p>
+      <div class="meter"><span><b>Key off:</b> one of the two pins shows battery voltage.</span><span><b>Key in RUN:</b> both pins show battery voltage, about 12 V.</span></div>
+      <ul class="results">
+        <li><span class="chip no">ONE OR BOTH MISSING KEY-ON</span><span>If the constant feed is missing, trace back to the under-hood fuse box. If only the switched feed is missing, the ignition switch or its wiring is the suspect; a worn WJ ignition switch is a known cause of dropped feeds. Also pull back the harness tape near the PCM and look for a chafed or aftermarket-tapped wire.</span></li>
+        <li><span class="chip yes">BOTH PRESENT</span><span class="go">Go to <a href="#E3">E3</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="E3">
+      <span class="id">E3</span>
+      <p class="q">Are the PCM grounds good?</p>
+      <p class="how">Pins 31 and 32 on the black connector are the two ground wires (black with tan stripe). Key in RUN, red lead backprobing each pin, black lead on the battery negative post. These grounds run to the engine block; on the 4.0 the main engine ground is near the starter, and a braided strap ties the cylinder head to the firewall.</p>
+      <div class="meter"><span><b>Pin 31 or 32 to battery negative, key on:</b> under 0.1 V. (Battery off: under 1 ohm.)</span></div>
+      <ul class="results">
+        <li><span class="chip no">OVER 0.1 V / OPEN</span><span>Clean the engine ground near the starter, the head-to-firewall strap, and the battery negative connection at the fender. Repair the black/tan wires if damaged. Retest.</span></li>
+        <li><span class="chip yes">GOOD</span><span class="go">Go to <a href="#E4">E4</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node decision" id="E4">
+      <span class="id">E4</span>
+      <p class="q">Is the 5-volt sensor supply alive?</p>
+      <p class="how">The PCM feeds 5 volts to its sensors. If any sensor shorts that supply to ground, the PCM shuts itself down to protect itself: no start, no communication, often "no bus". Key in RUN, backprobe the 5-volt wire at the throttle position sensor (TPS) on the throttle body; the wiring diagram shows which of its three wires is the supply (on most WJs it is the violet/white one).</p>
+      <div class="meter"><span><b>TPS supply wire, key on:</b> about 5.0 V.</span><span><b>0 V:</b> the supply is shorted or the PCM is not awake.</span></div>
+      <ul class="results">
+        <li><span class="chip no">0 V</span><span>Unplug these one at a time, cycling the key between each: TPS, MAP sensor (on the throttle body), crankshaft position sensor (on the bellhousing), camshaft position sensor (in the distributor-style drive on the block), transmission governor pressure sensor (on the transmission), and the A/C pressure transducer. When the 5 volts comes back, the sensor you just unplugged is shorted; replace it and retest the scanner. If it never comes back with all of them unplugged, <span class="go">go to <a href="#E5">E5</a>.</span></span></li>
+        <li><span class="chip yes">5 V PRESENT</span><span class="go">Go to <a href="#E5">E5</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node action" id="E5">
+      <span class="id">E5</span>
+      <p class="q">Inspect the PCM connectors for water and corrosion</p>
+      <p class="how">Battery off. Unplug all three PCM connectors (each has a lock lever or screw). Look at both the plug and the PCM side for green or white crust, water, bent pins, or terminals pushed back into the housing. The cowl drains sit right above this spot and clogged drains send water straight down onto the plugs. Clean with electrical contact cleaner, straighten pins, let everything dry, apply dielectric grease, reconnect firmly.</p>
+      <ul class="results">
+        <li><span class="chip yes">FOUND CORROSION</span><span>Clean, reconnect, battery on, retest the scanner. If it now connects, clear the cowl drains so it doesn't come back.</span></li>
+        <li><span class="chip no">CLEAN AND DRY</span><span class="go">Go to <a href="#E6">E6</a>.</span></li>
+      </ul>
+    </div>
+    <div class="node end" id="E6">
+      <span class="id">E6 · End of branch</span>
+      <p class="q">Power, grounds, sensors and plugs all check out: the PCM has failed</p>
+      <p class="how">This is the point where the evidence supports replacing the PCM. Two things to know first. These computers often fail from cracked solder joints inside, so a unit that works cold and drops out when the engine bay gets hot is also a PCM failure, and repair services exist for that. And a replacement is not plug-and-play: it must be programmed with the truck's VIN and mileage, and if the truck has Sentry Key it must be married to the key module, which takes a Chrysler-capable tool (dealer, mobile locksmith, or some independent shops). Remanufacturers can also ship one already programmed to your VIN. Before ordering, make sure branch C has been worked through too: a PCM with a shorted bus driver will still fail at C3 when unplugged, which confirms the diagnosis.</p>
+    </div>
+  </div>
+</section>
+
+<section id="ref">
+  <span class="eyebrow">Reference sheet</span>
+  <h2>Pins, fuses, readings and places</h2>
+  <div class="tablewrap">
+    <table>
+      <caption class="eyebrow" style="text-align:left;padding:6px 0">Data link connector (the port), pins numbered on the connector face</caption>
+      <tr><th class="mono">Pin</th><th>What it is</th><th>Wire color</th><th>Expected reading</th></tr>
+      <tr><td class="mono">2</td><td>PCI bus data wire (J1850 VPW)</td><td>Yellow / violet stripe</td><td class="mono">bouncing 1 to 3 V, key on</td></tr>
+      <tr><td class="mono">4</td><td>Chassis ground</td><td>Black</td><td class="mono">&lt; 0.2 V to battery negative</td></tr>
+      <tr><td class="mono">5</td><td>Signal ground</td><td>Black</td><td class="mono">&lt; 0.2 V to battery negative</td></tr>
+      <tr><td class="mono">16</td><td>Battery power, fuse 17 (10 A) in the junction block</td><td>Pink or red</td><td class="mono">12 to 12.6 V</td></tr>
+    </table>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <caption class="eyebrow" style="text-align:left;padding:6px 0">PCM black connector C1, 32 pins</caption>
+      <tr><th class="mono">Pin</th><th>What it is</th><th>Expected reading</th></tr>
+      <tr><td class="mono">2 and 22</td><td>Power feeds: one constant, one ignition-switched</td><td class="mono">one at 12 V key off; both at 12 V key on</td></tr>
+      <tr><td class="mono">31 and 32</td><td>Grounds (black / tan stripe) to the engine block</td><td class="mono">&lt; 0.1 V key on, &lt; 1 ohm battery off</td></tr>
+      <tr><td class="mono">11 (verify)</td><td>PCI bus data wire (yellow / violet stripe)</td><td class="mono">&lt; 1 ohm to port pin 2, battery off</td></tr>
+    </table>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Modules on the data wire</h3>
+      <p class="how" style="color:var(--muted);font-size:14px">Any one of these can silence all the others.</p>
+      <ul>
+        <li>PCM (passenger firewall)</li>
+        <li>Gauge cluster</li>
+        <li>Junction block / body controller (left end of dash)</li>
+        <li>ABS controller (under hood, driver side, on the brake unit)</li>
+        <li>Airbag control module (under center console)</li>
+        <li>Radio</li>
+        <li>Overhead console</li>
+        <li>Sentry Key immobilizer (ignition lock), if equipped</li>
+        <li>Climate control head, memory seat module, door modules (Limited)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Where things are</h3>
+      <ul>
+        <li><b>Port:</b> under the dash, left of the steering column.</li>
+        <li><b>Junction block (interior fuses):</b> left end of the dash, behind the cover you see with the driver's door open.</li>
+        <li><b>Power distribution center (under-hood fuses, relays):</b> driver's side of the engine bay beside the battery.</li>
+        <li><b>PCM:</b> passenger side of the firewall, upper corner of the engine bay. Three plugs: black C1, white C2, gray C3.</li>
+        <li><b>PCM grounds:</b> engine block near the starter, plus the braided head-to-firewall strap.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Readings at a glance</h3>
+      <ul>
+        <li><b>Battery:</b> 12.4 V or more at rest.</li>
+        <li><b>Data wire, live:</b> 0 V idle, 7.5 V pulses, reads 1 to 3 V bouncing on a meter.</li>
+        <li><b>Data wire, shorted:</b> stuck at 0 V or stuck at 12 V.</li>
+        <li><b>Data wire to ground, battery off:</b> roughly 1,000 to 3,000 ohms with everything plugged in.</li>
+        <li><b>Sensor supply at TPS:</b> 5.0 V key on.</li>
+        <li><b>Any ground pin:</b> under 0.1 to 0.2 V drop, under 1 ohm.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Most common endings, by how often they turn up</h3>
+      <ol>
+        <li>Blown fuse 17 or a corroded pin 16 at the port (someone shorted the port).</li>
+        <li>A scan tool or phone dongle that can't do J1850 VPW.</li>
+        <li>A failed radio or ABS controller dragging the data wire down.</li>
+        <li>Water in the PCM plugs from clogged cowl drains, or a shorted 5-volt sensor.</li>
+        <li>The PCM itself, often heat-related solder cracks.</li>
+      </ol>
+    </div>
+  </div>
+  <p class="foot">Fuse positions and wire colors are taken from WJ (1999 to 2004) fuse charts and service-manual pinouts shared by owners. Model-year wiring varies, so trust the printed fuse lid and your own wiring diagram over this sheet where they disagree. The PCM data pin is marked "verify" because owner-posted pinout charts were not conclusive for the 2000 4.0L.</p>
+</section>
+</div>
+</body>
+</html>
